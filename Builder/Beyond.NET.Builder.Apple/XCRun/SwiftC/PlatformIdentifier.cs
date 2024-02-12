@@ -7,4 +7,5 @@ public static class PlatformIdentifier
     public const string XROS = "apple-xros";
     
     public const string SimulatorSuffix = "-simulator";
+    public const string CatalystSuffix = "-macabi";
 }

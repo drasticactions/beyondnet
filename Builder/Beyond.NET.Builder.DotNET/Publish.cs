@@ -10,6 +10,9 @@ public class Publish
     
     public const string RUNTIME_IDENTIFIER_MACOS_X64 = "osx-x64";
     public const string RUNTIME_IDENTIFIER_MACOS_ARM64 = "osx-arm64";
+    
+    public const string RUNTIME_IDENTIFIER_MACCATALYST_X64 = "maccatalyst-x64";
+    public const string RUNTIME_IDENTIFIER_MACCATALYST_ARM64 = "maccatalyst-arm64";
 
     public const string RUNTIME_IDENTIFIER_IOS_ARM64 = "ios-arm64";
     public const string RUNTIME_IDENTIFIER_IOS_SIMULATOR_ARM64 = "iossimulator-arm64";

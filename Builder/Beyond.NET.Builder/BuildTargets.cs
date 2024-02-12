@@ -10,12 +10,13 @@ public enum BuildTargets
     iOSARM64 =              1 << 2,
     iOSSimulatorARM64 =     1 << 3,
     iOSSimulatorX64 =       1 << 4,
-        
+    MacOSCatalystARM64 =    1 << 5,
+    MacOSCatalystX64 =      1 << 6,
     MacOSUniversal = MacOSARM64 | MacOSX64,
     iOSSimulatorUniversal = iOSSimulatorARM64 | iOSSimulatorX64,
     iOSUniversal = iOSARM64 | iOSSimulatorUniversal,
-        
-    AppleUniversal = MacOSUniversal | iOSUniversal
+    MacCatalystUniversal = MacOSCatalystX64 | MacOSCatalystARM64,
+    AppleUniversal = MacOSUniversal | iOSUniversal | MacCatalystUniversal
 }
 
 internal static class BuildTargets_Extensions
@@ -37,5 +38,11 @@ internal static class BuildTargets_Extensions
     {
         return buildTargets.HasFlag(BuildTargets.MacOSARM64) ||
                buildTargets.HasFlag(BuildTargets.MacOSX64);
+    }
+    
+    public static bool ContainsAnyMacCatalystTarget(this BuildTargets buildTargets)
+    {
+        return buildTargets.HasFlag(BuildTargets.MacOSCatalystX64) ||
+               buildTargets.HasFlag(BuildTargets.MacOSCatalystARM64);
     }
 }

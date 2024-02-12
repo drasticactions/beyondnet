@@ -164,13 +164,13 @@ public class NativeCsProj
   <!-- Merge exported Symbols List -->
   <Target Name="MergeExportedSymbolsList" 
           BeforeTargets="LinkNative"
-          Condition="$(MixInSwift) And ($(RuntimeIdentifier.Contains('osx')) Or $(RuntimeIdentifier.Contains('ios')))">
+          Condition="$(MixInSwift) And ($(RuntimeIdentifier.Contains('osx')) Or $(RuntimeIdentifier.Contains('maccatalyst')) Or $(RuntimeIdentifier.Contains('ios')))">
     <Exec Command="echo '\n' >> '$(ExportsFile)'; cat '{TOKEN_SYMBOLS_FILE_PATH}' >> '$(ExportsFile)'" />
   </Target>
 
   <!-- Include pre-compiled Swift stuff -->
   <Choose>
-    <When Condition="$(MixInSwift) And ($(RuntimeIdentifier.Contains('osx')) Or $(RuntimeIdentifier.Contains('ios')))">
+    <When Condition="$(MixInSwift) And ($(RuntimeIdentifier.Contains('osx')) Or $(RuntimeIdentifier.Contains('maccatalyst')) Or $(RuntimeIdentifier.Contains('ios')))">
       <ItemGroup>
         <LinkerArg Include="-Wl,-force_load,{TOKEN_SWIFT_LIBRARY_FILE_PATH}" />
         <LinkerArg Include="-fmodules -fmodule-map-file={TOKEN_MODULE_MAP_FILE_PATH}" />
@@ -189,7 +189,7 @@ public class NativeCsProj
 
   <!-- Culture stuff for iOS Support -->
   <Choose>
-    <When Condition="$(RuntimeIdentifier.Contains('ios'))">
+    <When Condition="$(RuntimeIdentifier.Contains('ios')) Or $(RuntimeIdentifier.Contains('maccatalyst'))">
       <!-- If globalization is not required, you can enable this instead of providing an icudt.dat file on iOS -->
       <!-- <PropertyGroup>
         <InvariantGlobalization>true</InvariantGlobalization>
@@ -203,7 +203,7 @@ public class NativeCsProj
   </Choose>
 
   <Choose>
-    <When Condition="$(RuntimeIdentifier.Contains('ios'))">
+    <When Condition="$(RuntimeIdentifier.Contains('ios')) Or $(RuntimeIdentifier.Contains('maccatalyst'))">
       <ItemGroup>
         <!-- Link to Swift on iOS (it's automatic when targeting macOS) -->
         <LinkerArg Include="-L/usr/lib/swift" />
@@ -213,7 +213,7 @@ public class NativeCsProj
 
   <!-- TODO: Temporary workarounds for iOS/iOS Simulator support -->
   <Choose>
-    <When Condition="$(RuntimeIdentifier.Contains('ios'))">
+    <When Condition="$(RuntimeIdentifier.Contains('ios')) Or $(RuntimeIdentifier.Contains('maccatalyst'))">
       <PropertyGroup>
         <PublishAotUsingRuntimePack>true</PublishAotUsingRuntimePack>
         <_IsAppleMobileLibraryMode>false</_IsAppleMobileLibraryMode>
@@ -235,7 +235,7 @@ public class NativeCsProj
 
   <!-- TODO: Temporary workarounds for iOS support -->
   <Choose>
-    <When Condition="$(RuntimeIdentifier.Contains('ios-'))">
+    <When Condition="$(RuntimeIdentifier.Contains('ios-')) Or $(RuntimeIdentifier.Contains('maccatalyst'))">
       <ItemGroup>
         <!-- TODO: Temporary workaround for iOS support -->
         <LinkerArg Include="-isysroot {TOKEN_IOS_SDK_PATH}" />

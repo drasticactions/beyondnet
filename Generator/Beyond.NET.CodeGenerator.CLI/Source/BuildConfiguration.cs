@@ -9,6 +9,7 @@ public record BuildConfiguration
     string? ProductOutputPath,
     
     string? MacOSDeploymentTarget,
+    string? MacCatalystDeploymentTarget,
     string? iOSDeploymentTarget,
     
     bool DisableParallelBuild,
@@ -19,11 +20,13 @@ internal static class BuildTargets
 {
     public const string APPLE_UNIVERSAL = "apple-universal";
     public const string MACOS_UNIVERSAL = "macos-universal";
+    public const string MACCATALYST_UNIVERSAL = "maccatalyst-universal";
     public const string IOS_UNIVERSAL = "ios-universal";
 }
 
 internal static class AppleDeploymentTargets
 {
     public const string MACOS_DEFAULT = "13.0";
+    public const string MACCATALYST_DEFAULT = "16.0";
     public const string IOS_DEFAULT = "16.0";
 }

@@ -136,6 +136,10 @@ public class DotNETNativeBuilder
             string? iOSSimulatorARM64BuildDir = Targets.HasFlag(BuildTargets.iOSSimulatorARM64) ? $"{binDirName}/{BUILD_CONFIGURATION}/{TargetFramework}/{RuntimeIdentifier.iOS_SIMULATOR_ARM64}/{publishDirName}" : null;
             string? iOSSimulatorX64BuildDir = Targets.HasFlag(BuildTargets.iOSSimulatorX64) ? $"{binDirName}/{BUILD_CONFIGURATION}/{TargetFramework}/{RuntimeIdentifier.iOS_SIMULATOR_X64}/{publishDirName}" : null;
             string? iOSSimulatorUniversalBuildDir = Targets.HasFlag(BuildTargets.iOSSimulatorUniversal) ? $"{binDirName}/{BUILD_CONFIGURATION}/{TargetFramework}/{RuntimeIdentifier.iOS_SIMULATOR_UNIVERSAL}/{publishDirName}" : null;
+            string? macCatalystARM64BuildDir = Targets.HasFlag(BuildTargets.MacOSCatalystARM64) ? $"{binDirName}/{BUILD_CONFIGURATION}/{TargetFramework}/{RuntimeIdentifier.MacCatalyst_ARM64}/{publishDirName}" : null;
+            string? macCatalystX64BuildDir = Targets.HasFlag(BuildTargets.MacOSCatalystX64) ? $"{binDirName}/{BUILD_CONFIGURATION}/{TargetFramework}/{RuntimeIdentifier.MacCatalyst_X64}/{publishDirName}" : null;
+            string? macCatalystUniversalBuildDir = Targets.HasFlag(BuildTargets.MacCatalystUniversal) ? $"{binDirName}/{BUILD_CONFIGURATION}/{TargetFramework}/{RuntimeIdentifier.MacCatalyst_UNIVERSAL}/{publishDirName}" : null;
+
             string appleUniversalBuildDir = $"{binDirName}/{BUILD_CONFIGURATION}/{TargetFramework}/{RuntimeIdentifier.APPLE_UNIVERSAL}/{publishDirName}";
 
             string iOSARM64TempPath = Directory.CreateTempSubdirectory(tempDirectoryPrefix + "_iOS_ARM64").FullName;
@@ -162,6 +166,24 @@ public class DotNETNativeBuilder
             string? iOSSimulatorUniversalBuildPath = Targets.HasFlag(BuildTargets.iOSSimulatorUniversal) ? Path.Combine(iOSSimulatorUniversalTempPath, iOSSimulatorUniversalBuildDir!) : null;
             string? iOSSimulatorUniversalFilePath = Targets.HasFlag(BuildTargets.iOSSimulatorUniversal) ? Path.Combine(iOSSimulatorUniversalBuildPath!, OutputProductFileName) : null;
 
+            string macCatalystARM64TempPath = Directory.CreateTempSubdirectory(tempDirectoryPrefix + "_macCatalyst_ARM64").FullName;
+            tempDirPaths.Add(macCatalystARM64TempPath);
+            Logger.LogDebug($"Created temp directory for .NET NativeAOT project at \"{macCatalystARM64TempPath}\"");
+            string? macCatalystARM64BuildPath = Targets.HasFlag(BuildTargets.MacOSCatalystARM64) ? Path.Combine(macCatalystARM64TempPath, macCatalystARM64BuildDir!) : null;
+            string? macCatalystARM64FilePath = Targets.HasFlag(BuildTargets.MacOSCatalystARM64) ? Path.Combine(macCatalystARM64BuildPath!, OutputProductFileName) : null;
+            
+            string macCatalystX64TempPath = Directory.CreateTempSubdirectory(tempDirectoryPrefix + "_macCatalyst_X64").FullName;
+            tempDirPaths.Add(macCatalystX64TempPath);
+            Logger.LogDebug($"Created temp directory for .NET NativeAOT project at \"{macCatalystX64TempPath}\"");
+            string? macCatalystX64BuildPath = Targets.HasFlag(BuildTargets.MacOSCatalystARM64) ? Path.Combine(macCatalystX64TempPath, macCatalystX64BuildDir!) : null;
+            string? macCatalystX64FilePath = Targets.HasFlag(BuildTargets.MacOSCatalystARM64) ? Path.Combine(macCatalystX64BuildPath!, OutputProductFileName) : null;
+            
+            string macCatalystUniversalTempPath = Directory.CreateTempSubdirectory(tempDirectoryPrefix + "_macCatalyst_Universal").FullName;
+            tempDirPaths.Add(macCatalystUniversalTempPath);
+            Logger.LogDebug($"Created temp directory for .NET NativeAOT project at \"{macCatalystUniversalTempPath}\"");
+            string? macCatalystUniversalBuildPath = Targets.HasFlag(BuildTargets.MacOSCatalystARM64) ? Path.Combine(macCatalystUniversalTempPath, macCatalystUniversalBuildDir!) : null;
+            string? macCatalystUniversalFilePath = Targets.HasFlag(BuildTargets.MacOSCatalystARM64) ? Path.Combine(macCatalystUniversalBuildPath!, OutputProductFileName) : null;
+            
             string macOSARM64TempPath = Directory.CreateTempSubdirectory(tempDirectoryPrefix + "_macOS_ARM64").FullName;
             tempDirPaths.Add(macOSARM64TempPath);
             Logger.LogDebug($"Created temp directory for .NET NativeAOT project at \"{macOSARM64TempPath}\"");
@@ -214,6 +236,30 @@ public class DotNETNativeBuilder
                 macOSX64Func = () => DotNETPublish(macOSX64TempPath, RuntimeIdentifier.MacOS_X64);
             }
             #endregion macOS
+            
+            #region macCatalyst
+            Action? macCatalystARM64Func = null;
+            if (Targets.HasFlag(BuildTargets.MacOSCatalystARM64)) {
+                FileSystemUtils.CopyDirectoryContents(
+                    tempDirectoryPath,
+                    macCatalystARM64TempPath,
+                    true
+                );
+                
+                macCatalystARM64Func = () => DotNETPublish(macCatalystARM64TempPath, RuntimeIdentifier.MacCatalyst_ARM64);
+            }
+
+            Action? macCatalystX64Func = null;
+            if (Targets.HasFlag(BuildTargets.MacOSCatalystX64)) {
+                FileSystemUtils.CopyDirectoryContents(
+                    tempDirectoryPath,
+                    macCatalystX64TempPath,
+                    true
+                );
+                
+                macCatalystX64Func = () => DotNETPublish(macCatalystX64TempPath, RuntimeIdentifier.MacCatalyst_X64);
+            }
+            #endregion macCatalyst
             
             #region iOS
             Action? iOSARM64Func = null;
@@ -273,6 +319,18 @@ public class DotNETNativeBuilder
                 if (macOSX64Func is not null) {
                     tasks.Add(Task.Run(macOSX64Func));
                 }
+                
+                if (macCatalystARM64Func is not null) {
+                    tasks.Add(Task.Run(macCatalystARM64Func));
+                }
+                
+                if (macCatalystX64Func is not null) {
+                    tasks.Add(Task.Run(macCatalystX64Func));
+                }
+
+                if (macOSX64Func is not null) {
+                    tasks.Add(Task.Run(macOSX64Func));
+                }
 
                 if (iOSARM64Func is not null) {
                     tasks.Add(Task.Run(iOSARM64Func));
@@ -292,6 +350,9 @@ public class DotNETNativeBuilder
             } else {
                 macOSARM64Func?.Invoke();
                 macOSX64Func?.Invoke();
+                
+                macCatalystARM64Func?.Invoke();
+                macCatalystX64Func?.Invoke();
                 
                 iOSARM64Func?.Invoke();
                 iOSSimulatorARM64Func?.Invoke();
@@ -318,6 +379,26 @@ public class DotNETNativeBuilder
                 Apple.InstallNameTool.App.ChangeId(macOSUniversalFilePath!, newLibraryId);
             }
             #endregion macOS
+            
+            #region Lipo macCatalyst Builds
+            if (Targets.HasFlag(BuildTargets.MacCatalystUniversal)) {
+                Logger.LogDebug($"Creating directory for Mac Catalyst Universal build at \"{macCatalystUniversalBuildDir}\"");
+                Directory.CreateDirectory(macCatalystUniversalBuildDir!);
+    
+                Logger.LogDebug($"Merging mac catalyst ARM64 build at \"{macCatalystARM64FilePath}\" and mac catalyst x64 build at \"{macCatalystX64FilePath}\" into mac catalyst Universal build at \"{macCatalystUniversalFilePath}\"");
+                
+                Apple.Lipo.App.Create(
+                    new[] {
+                        macCatalystARM64FilePath!,
+                        macCatalystX64FilePath!
+                    },
+                    macCatalystUniversalFilePath!
+                );
+    
+                Logger.LogDebug($"Changing library ID of macOS Universal build at \"{macCatalystUniversalFilePath}\" to \"{newLibraryId}\"");
+                Apple.InstallNameTool.App.ChangeId(macCatalystUniversalFilePath!, newLibraryId);
+            }
+            #endregion macCatalyst
 
             #region Lipo iOS Builds
             if (Targets.HasFlag(BuildTargets.iOSSimulatorUniversal)) {

@@ -11,6 +11,7 @@ public class SwiftBuilder
         string GeneratedCHeaderFilePath,
         string GeneratedSwiftFilePath,
         string DeploymentTargetMacOS,
+        string DeploymentTargetMacCatalyst,
         string DeploymentTargetiOS,
         bool BuildInParallel
     );
@@ -29,7 +30,9 @@ public class SwiftBuilder
         PartialCompileResult? MacOSX64Result,
         PartialCompileResult? iOSARM64Result,
         PartialCompileResult? iOSSimulatorARM64Result,
-        PartialCompileResult? iOSSimulatorX64Result
+        PartialCompileResult? iOSSimulatorX64Result,
+        PartialCompileResult? macCatalystARM64Result,
+        PartialCompileResult? macCatalystX64Result
     );
     
     public record PartialCompileResult(
@@ -60,6 +63,7 @@ public class SwiftBuilder
 
         string deploymentTargetMacOS = Configuration.DeploymentTargetMacOS;
         string deploymentTargetiOS = Configuration.DeploymentTargetiOS;
+        string deploymentTargetMacCatalyst = Configuration.DeploymentTargetMacCatalyst;
 
         string generatedCHeaderFilePath = Configuration.GeneratedCHeaderFilePath;
         string generatedSwiftFilePath = Configuration.GeneratedSwiftFilePath;
@@ -143,7 +147,7 @@ public class SwiftBuilder
 
         string? sdkPathMacOS;
 
-        if (Configuration.Targets.ContainsAnyMacOSTarget()) {
+        if (Configuration.Targets.ContainsAnyMacOSTarget() || Configuration.Targets.ContainsAnyMacCatalystTarget()) {
             Logger.LogDebug($"Getting macOS SDK Path");
             sdkPathMacOS = Apple.XCRun.SDK.GetSDKPath(Apple.XCRun.SDK.macOSName);
         } else {
@@ -184,7 +188,9 @@ public class SwiftBuilder
         string platformIdentifieriOSSimulatorDN = DotNET.PlatformIdentifier.iOSSimulator;
 
         string platformSuffixiOSSimulator = Apple.XCRun.SwiftC.PlatformIdentifier.SimulatorSuffix;
-
+        string platformSuffixCatalyst = Apple.XCRun.SwiftC.PlatformIdentifier.CatalystSuffix;
+        string platformIdentifierCatalystDN = DotNET.PlatformIdentifier.iOSSimulator;
+        
         string outputPathRoot = Path.Combine(tempDirectoryPath, "bin");
         string outputPathApple = Path.Combine(outputPathRoot, "apple");
 
@@ -206,6 +212,14 @@ public class SwiftBuilder
 
         string? outputPathiOSSimulatorX64 = Configuration.Targets.HasFlag(BuildTargets.iOSSimulatorX64)
             ? Path.Combine(outputPathApple, $"{platformIdentifieriOSSimulatorDN}-{targetIdentifierX64DN}")
+            : null;
+        
+        string? outputPathCatalystARM64 = Configuration.Targets.HasFlag(BuildTargets.MacOSCatalystARM64)
+            ? Path.Combine(outputPathApple, $"{platformIdentifierCatalystDN}-{targetIdentifierARM64DN}")
+            : null;
+
+        string? outputPathCatalystX64 = Configuration.Targets.HasFlag(BuildTargets.MacOSCatalystX64)
+            ? Path.Combine(outputPathApple, $"{platformIdentifierCatalystDN}-{targetIdentifierX64DN}")
             : null;
 
         if (outputPathMacOSARM64 is not null) {
@@ -231,6 +245,16 @@ public class SwiftBuilder
         if (outputPathiOSSimulatorX64 is not null) {
             Logger.LogDebug($"Creating iOS Simulator x64 Output Path at \"{outputPathMacOSX64}\"");
             Directory.CreateDirectory(outputPathiOSSimulatorX64);
+        }
+        
+        if (outputPathCatalystARM64 is not null) {
+            Logger.LogDebug($"Creating Mac Catalyst ARM64 Output Path at \"{outputPathMacOSX64}\"");
+            Directory.CreateDirectory(outputPathCatalystARM64);
+        }
+
+        if (outputPathCatalystX64 is not null) {
+            Logger.LogDebug($"Creating Mac Catalyst x64 Output Path at \"{outputPathMacOSX64}\"");
+            Directory.CreateDirectory(outputPathCatalystX64);
         }
 
         SwiftCompiler compiler = new(
@@ -324,6 +348,37 @@ public class SwiftBuilder
         }
         #endregion iOS Simulator
         
+        #region Mac Catalyst
+        Func<PartialCompileResult>? macCatalystARM64Func;
+        if (Configuration.Targets.HasFlag(BuildTargets.MacOSCatalystARM64)) {
+            macCatalystARM64Func = () => compiler.Compile(
+                sdkPathMacOS!,
+                targetIdentifierARM64,
+                platformIdentifieriOS,
+                platformSuffixCatalyst,
+                deploymentTargetMacCatalyst,
+                outputPathCatalystARM64!
+            );
+        } else {
+            macCatalystARM64Func = null;
+        }
+        
+        Func<PartialCompileResult>? macCatalystX64Func;
+
+        if (Configuration.Targets.HasFlag(BuildTargets.MacOSCatalystX64)) {
+            macCatalystX64Func = () => compiler.Compile(
+                sdkPathMacOS!,
+                targetIdentifierX64,
+                platformIdentifieriOS,
+                platformSuffixCatalyst,
+                deploymentTargetMacCatalyst,
+                outputPathCatalystX64!
+            );
+        } else {
+            macCatalystX64Func = null;
+        }
+        #endregion
+        
         string libraryOutputPathFormat = Path.Combine(
             outputPathApple,
             "{0}", // Runtime Identifier
@@ -341,6 +396,8 @@ public class SwiftBuilder
         PartialCompileResult? iOSARM64Result;
         PartialCompileResult? iOSSimulatorARM64Result;
         PartialCompileResult? iOSSimulatorX64Result;
+        PartialCompileResult? macCatalystARM64Result;
+        PartialCompileResult? macCatalystX64Result;
 
         if (Configuration.BuildInParallel) {
             List<Task> tasks = new();
@@ -375,6 +432,18 @@ public class SwiftBuilder
                 tasks.Add(iOSSimulatorX64Task);
             }
             
+            Task<PartialCompileResult>? macCatalystARM64Task = null;
+            if (macCatalystARM64Func is not null) {
+                macCatalystARM64Task = Task.Run(macCatalystARM64Func); 
+                tasks.Add(macCatalystARM64Task);
+            }
+            
+            Task<PartialCompileResult>? macCatalystX64Task = null;
+            if (macCatalystX64Func is not null) {
+                macCatalystX64Task = Task.Run(macCatalystX64Func); 
+                tasks.Add(macCatalystX64Task);
+            }
+            
             Logger.LogDebug($"Waiting for {tasks.Count} Swift compilation tasks to complete in parallel");
 
             Task.WaitAll(tasks.ToArray());
@@ -384,12 +453,16 @@ public class SwiftBuilder
             iOSARM64Result = iOSARM64Task?.Result;
             iOSSimulatorARM64Result = iOSSimulatorARM64Task?.Result;
             iOSSimulatorX64Result = iOSSimulatorX64Task?.Result;
+            macCatalystARM64Result = macCatalystARM64Task?.Result;
+            macCatalystX64Result = macCatalystX64Task?.Result;
         } else {
            macOSARM64Result = macOSARM64Func?.Invoke();
            macOSX64Result = macOSX64Func?.Invoke();
            iOSARM64Result = iOSARM64Func?.Invoke();
            iOSSimulatorARM64Result = iOSSimulatorARM64Func?.Invoke();
            iOSSimulatorX64Result = iOSSimulatorX64Func?.Invoke();
+           macCatalystARM64Result = macCatalystARM64Func?.Invoke();
+           macCatalystX64Result = macCatalystX64Func?.Invoke();
         }
 
         BuildResult result = new(
@@ -403,7 +476,9 @@ public class SwiftBuilder
             macOSX64Result,
             iOSARM64Result,
             iOSSimulatorARM64Result,
-            iOSSimulatorX64Result
+            iOSSimulatorX64Result,
+            macCatalystARM64Result,
+            macCatalystX64Result
         );
 
         return result;

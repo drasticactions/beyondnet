@@ -24,6 +24,14 @@ public static class RuntimeIdentifier
     /// </summary>
     public const string iOS_UNIVERSAL = $"{PlatformIdentifier.iOS}-{TargetIdentifier.UNIVERSAL}";
     
+    public const string MacCatalyst_ARM64 = $"{PlatformIdentifier.macCatalyst}-{TargetIdentifier.ARM64}";
+    public const string MacCatalyst_X64 = $"{PlatformIdentifier.macCatalyst}-{TargetIdentifier.x64}";
+    
+    /// <summary>
+    /// Made up, not part of .NET!
+    /// </summary>
+    public const string MacCatalyst_UNIVERSAL = $"{PlatformIdentifier.macCatalyst}-{TargetIdentifier.UNIVERSAL}";
+    
     /// <summary>
     /// Made up, not part of .NET!
     /// </summary>

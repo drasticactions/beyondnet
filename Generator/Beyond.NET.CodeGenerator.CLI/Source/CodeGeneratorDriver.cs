@@ -71,6 +71,7 @@ internal class CodeGeneratorDriver
             string? buildProductBundleIdentifier = null;
             string? buildProductOutputPath = null;
             string? buildMacOSDeploymentTarget = null;
+            string? buildMacCatalystDeploymentTarget = null;
             string? buildiOSDeploymentTarget = null;
             bool disableParallelBuild = false;
             bool disableStripDotNETSymbols = false;
@@ -82,8 +83,9 @@ internal class CodeGeneratorDriver
                 
                 if (buildTarget != BuildTargets.APPLE_UNIVERSAL &&
                     buildTarget != BuildTargets.MACOS_UNIVERSAL &&
+                    buildTarget != BuildTargets.MACCATALYST_UNIVERSAL &&
                     buildTarget != BuildTargets.IOS_UNIVERSAL) {
-                    throw new Exception($"Only \"{BuildTargets.APPLE_UNIVERSAL}\", \"{BuildTargets.MACOS_UNIVERSAL}\" and \"{BuildTargets.IOS_UNIVERSAL}\" are currently supported as \"{nameof(buildConfig.Target)}\"");
+                    throw new Exception($"Only \"{BuildTargets.APPLE_UNIVERSAL}\", \"{BuildTargets.MACOS_UNIVERSAL}\", \"{BuildTargets.MACCATALYST_UNIVERSAL}\" and \"{BuildTargets.IOS_UNIVERSAL}\" are currently supported as \"{nameof(buildConfig.Target)}\"");
                 }
 
                 var potentialProductName = buildConfig.ProductName;
@@ -141,6 +143,12 @@ internal class CodeGeneratorDriver
     
                 if (string.IsNullOrEmpty(buildMacOSDeploymentTarget)) {
                     buildMacOSDeploymentTarget = AppleDeploymentTargets.MACOS_DEFAULT;
+                }
+                
+                buildMacCatalystDeploymentTarget = buildConfig.MacOSDeploymentTarget;
+    
+                if (string.IsNullOrEmpty(buildMacCatalystDeploymentTarget)) {
+                    buildMacCatalystDeploymentTarget = AppleDeploymentTargets.MACCATALYST_DEFAULT;
                 }
     
                 buildiOSDeploymentTarget = buildConfig.iOSDeploymentTarget;
@@ -365,6 +373,7 @@ internal class CodeGeneratorDriver
                     string.IsNullOrEmpty(cOutputPath) ||
                     string.IsNullOrEmpty(swiftOutputPath) ||
                     string.IsNullOrEmpty(buildMacOSDeploymentTarget) ||
+                    string.IsNullOrEmpty(buildMacCatalystDeploymentTarget) ||
                     string.IsNullOrEmpty(buildiOSDeploymentTarget)) {
                     // We checked all of these above so we shouldn't get here but just in case...
                     throw new Exception("Invalid build configuration");
@@ -378,7 +387,11 @@ internal class CodeGeneratorDriver
                     builderBuildTargets = Beyond.NET.Builder.BuildTargets.MacOSUniversal;
                 } else if (buildTarget == BuildTargets.IOS_UNIVERSAL) {
                     builderBuildTargets = Beyond.NET.Builder.BuildTargets.iOSUniversal;
-                } else {
+                    
+                } else if (buildTarget == BuildTargets.MACCATALYST_UNIVERSAL) {
+                    builderBuildTargets = Beyond.NET.Builder.BuildTargets.MacCatalystUniversal;
+                }
+                else {
                     throw new Exception($"Build Target \"{buildTarget}\" is not a supported target for the SwiftBuilder");
                 }
                 
@@ -389,6 +402,7 @@ internal class CodeGeneratorDriver
                     cOutputPath,
                     swiftOutputPath,
                     buildMacOSDeploymentTarget,
+                    buildMacCatalystDeploymentTarget,
                     buildiOSDeploymentTarget,
                     !disableParallelBuild
                 );
